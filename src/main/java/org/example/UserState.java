@@ -23,14 +23,6 @@ public class UserState {
     private String emailAddress;
     private String mobileNumber;
 
-    public UserState() {
-        this.firstName = firstName;
-        this.middleName = middleName;
-        this.lastName = lastName;
-        this.emailAddress = emailAddress;
-        this.mobileNumber = mobileNumber;
-    }
-
     public long getId() {
         return id;
     }
@@ -77,16 +69,5 @@ public class UserState {
 
     public void setMobileNumber(String mobileNumber) {
         this.mobileNumber = mobileNumber;
-    }
-
-    public void saveContact(UserState contact) throws IOException {
-
-        JSONArray arr = new JSONArray();
-        JSONObject retVal = new JSONObject();
-        retVal.put("userStateId", Long.toString(contact.getId()));
-        retVal.put("status", "success");
-
-        arr.put(retVal);
-
     }
 }

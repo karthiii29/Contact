@@ -6,9 +6,11 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
 import org.apache.catalina.User;
+import org.example.APIMessages;
 import org.example.CommonUtility;
 import org.example.UserState;
 import org.example.repository.UserRepository;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -24,41 +26,53 @@ public class UserResource {
     private UserRepository userRepository;
 
     @PostMapping(path = "/add")
-    public @ResponseBody String createUserAPI(
-                              @RequestParam("firstName") String firstName,
-                              @RequestParam("middleName") String middleName,
-                              @RequestParam("lastName") String lastname,
-                              @RequestParam("emailAddress") String emailAddress,
-                              @RequestParam("mobileNumber") String mobileNumber) {
-        
+    public @ResponseBody Response createUserAPI(
+            @RequestParam("firstName") String firstName,
+            @RequestParam("middleName") String middleName,
+            @RequestParam("lastName") String lastName,
+            @RequestParam("emailAddress") String emailAddress,
+            @RequestParam("mobileNumber") String mobileNumber) {
 
-        UserState user = new UserState();
-
-        if (firstName != null || emailAddress != null) {
-            user.setFirstName(firstName);
-
-            if (CommonUtility.emailCheck(emailAddress)) {
-                user.setEmailAddress(emailAddress);
-            } else {
-                return "Please enter email address properly!";
+        try {
+            // Basic mandatory checks
+            if (firstName == null || firstName.isEmpty() ||
+                    emailAddress == null || emailAddress.isEmpty()) {
+                return Response.serverError().entity(APIMessages.MANDATORY_ERROR).build();
             }
 
-        }
+            // Validate email
+            if (!CommonUtility.emailCheck(emailAddress)) {
+                return Response.serverError().entity(APIMessages.EMAIL_ERROR).build();
+            }
 
-        user.setMiddleName(middleName);
-        user.setLastName(lastname);
+            // Validate mobile number
+            if (!CommonUtility.mobileNumberCheck(mobileNumber)) {
+                return Response.serverError().entity(APIMessages.MOBILE_NUMBER_ERROR).build();
+            }
 
-        if (CommonUtility.mobileNumberCheck(mobileNumber)) {
+            // Create and populate user object
+            UserState user = new UserState();
+            user.setFirstName(firstName);
+            user.setMiddleName(middleName);
+            user.setLastName(lastName);
+            user.setEmailAddress(emailAddress);
             user.setMobileNumber(mobileNumber);
-        } else {
-            return "Please enter mobile number properly!";
+
+            // Prepare success response
+            JSONObject userJson = new JSONObject();
+            userJson.put("userId", user.getId());
+            userJson.put("status", "success");
+
+            JSONArray resultArray = new JSONArray();
+            resultArray.put(userJson);
+
+            return CommonUtility.returnResponse(resultArray.toString(), true);
+
+        } catch (Exception e) {
+            return CommonUtility.returnResponse(APIMessages.CREATE_CONTACT_FAIL, false);
         }
-
-
-        userRepository.save(user);
-
-        return null;
     }
+
 
     @GetMapping(path = "/all")
     public @ResponseBody Iterable<UserState> getUserAPI() {
@@ -67,11 +81,11 @@ public class UserResource {
 
     @PutMapping(path = "/update/{id}")
     public @ResponseBody UserState updateUserAPI(@PathVariable Integer id,
-                                                           @RequestParam("firstName") String firstName,
-                                                           @RequestParam("middleName") String middleName,
-                                                           @RequestParam("lastName") String lastname,
-                                                           @RequestParam("emailAddress") String emailAddress,
-                                                           @RequestParam("mobileNumber") String mobileNumber ) {
+                                                 @RequestParam("firstName") String firstName,
+                                                 @RequestParam("middleName") String middleName,
+                                                 @RequestParam("lastName") String lastname,
+                                                 @RequestParam("emailAddress") String emailAddress,
+                                                 @RequestParam("mobileNumber") String mobileNumber ) {
 
 
         UserState user = userRepository.findById(id).get();

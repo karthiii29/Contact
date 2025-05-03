@@ -18,10 +18,12 @@ public class CommonUtility {
     }
 
     public static boolean emailCheck(String email) {
+
+        if (email.isEmpty()) {
+            return false;
+        }
         return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
-
-
 
 
 }
