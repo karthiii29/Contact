@@ -6,16 +6,18 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
 import org.apache.catalina.User;
-import org.example.APIMessages;
-import org.example.CommonUtility;
-import org.example.UserState;
+import org.example.*;
 import org.example.repository.UserRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -25,51 +27,49 @@ public class UserResource {
     @Autowired
     private UserRepository userRepository;
 
-    @PostMapping(path = "/add")
-    public @ResponseBody Response createUserAPI(
-            @RequestParam("firstName") String firstName,
-            @RequestParam("middleName") String middleName,
-            @RequestParam("lastName") String lastName,
-            @RequestParam("emailAddress") String emailAddress,
-            @RequestParam("mobileNumber") String mobileNumber) {
+    @PostMapping(path = "/create")
+    public ResponseEntity<ApiResponse<Map<String, String>>> createUser(@RequestBody CreateUserRequest request) {
 
         try {
-            // Basic mandatory checks
-            if (firstName == null || firstName.isEmpty() ||
-                    emailAddress == null || emailAddress.isEmpty()) {
-                return Response.serverError().entity(APIMessages.MANDATORY_ERROR).build();
+            // Mandatory checks
+            if (request.getFirstName() == null || request.getFirstName().isEmpty() ||
+                    request.getEmailAddress() == null || request.getEmailAddress().isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                        new ApiResponse<>(false, APIMessages.MANDATORY_ERROR, null));
             }
 
-            // Validate email
-            if (!CommonUtility.emailCheck(emailAddress)) {
-                return Response.serverError().entity(APIMessages.EMAIL_ERROR).build();
+            // Email validation
+            if (!CommonUtility.emailCheck(request.getEmailAddress())) {
+                return ResponseEntity.badRequest().body(
+                        new ApiResponse<>(false, APIMessages.EMAIL_ERROR, null));
             }
 
-            // Validate mobile number
-            if (!CommonUtility.mobileNumberCheck(mobileNumber)) {
-                return Response.serverError().entity(APIMessages.MOBILE_NUMBER_ERROR).build();
+            // Mobile number validation
+            if (!CommonUtility.mobileNumberCheck(request.getMobileNumber())) {
+                return ResponseEntity.badRequest().body(
+                        new ApiResponse<>(false, APIMessages.MOBILE_NUMBER_ERROR, null));
             }
 
-            // Create and populate user object
+            // Save user
             UserState user = new UserState();
-            user.setFirstName(firstName);
-            user.setMiddleName(middleName);
-            user.setLastName(lastName);
-            user.setEmailAddress(emailAddress);
-            user.setMobileNumber(mobileNumber);
+            user.setFirstName(request.getFirstName());
+            user.setMiddleName(request.getMiddleName());
+            user.setLastName(request.getLastName());
+            user.setEmailAddress(request.getEmailAddress());
+            user.setMobileNumber(request.getMobileNumber());
+
+            userRepository.save(user);
 
             // Prepare success response
-            JSONObject userJson = new JSONObject();
-            userJson.put("userId", user.getId());
-            userJson.put("status", "success");
+            Map<String, String> data = new HashMap<>();
+            data.put("userId", String.valueOf(user.getId()));
+            data.put("status", "success");
 
-            JSONArray resultArray = new JSONArray();
-            resultArray.put(userJson);
-
-            return CommonUtility.returnResponse(resultArray.toString(), true);
+            return ResponseEntity.ok(new ApiResponse<>(true, "User created successfully", data));
 
         } catch (Exception e) {
-            return CommonUtility.returnResponse(APIMessages.CREATE_CONTACT_FAIL, false);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, APIMessages.CREATE_CONTACT_FAIL, null));
         }
     }
 
