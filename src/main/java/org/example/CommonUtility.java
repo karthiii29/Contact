@@ -2,6 +2,9 @@ package org.example;
 
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.springframework.http.ResponseEntity;
+
+import java.util.Map;
 
 public class CommonUtility {
     public static Response returnResponse(String responseJSON, boolean responseStatus) {
@@ -24,5 +27,25 @@ public class CommonUtility {
         }
         return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
+
+    public static String validateContactInfo(String email, String mobile) {
+        boolean isEmailValid = CommonUtility.emailCheck(email);
+        boolean isMobileValid = CommonUtility.mobileNumberCheck(mobile);
+
+        if (!isEmailValid || !isMobileValid) {
+            StringBuilder errorMessage = new StringBuilder("Enter valid ");
+            if (!isEmailValid && !isMobileValid) {
+                errorMessage.append("email and mobile number.");
+            } else if (!isEmailValid) {
+                errorMessage.append("email address.");
+            } else {
+                errorMessage.append("mobile number.");
+            }
+            return errorMessage.toString();
+        }
+
+        return null; // Indicates no error
+    }
+
 
 }
