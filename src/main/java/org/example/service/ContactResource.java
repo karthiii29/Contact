@@ -78,35 +78,20 @@ public class ContactResource {
             @PathVariable Long id, @RequestBody CreateUserRequest request) {
 
         Optional<UserState> existingContactOpt = contactRepository.findById(id);
+
         if (existingContactOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(false, APIMessages.USER_NOT_FOUND, null));
         }
 
-        if (request.getFirstName() == null || request.getFirstName().isEmpty()
-                || request.getEmailAddress() == null || request.getEmailAddress().isEmpty()) {
-            return ResponseEntity.badRequest().body(
-                    new ApiResponse<>(false, APIMessages.MANDATORY_ERROR, null));
-        }
-
-        if (!CommonUtility.emailCheck(request.getEmailAddress())) {
-            return ResponseEntity.badRequest().body(
-                    new ApiResponse<>(false, APIMessages.EMAIL_ERROR, null));
-        }
-
-        if (!CommonUtility.mobileNumberCheck(request.getMobileNumber())) {
-            return ResponseEntity.badRequest().body(
-                    new ApiResponse<>(false, APIMessages.MOBILE_NUMBER_ERROR, null));
+        String validationError = CommonUtility.validateContactInfo(request.getEmailAddress(), request.getMobileNumber());
+        if (validationError != null) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, validationError, null));
         }
 
         try {
-            UserState contact = existingContactOpt.get();
-            contact.setFirstName(request.getFirstName());
-            contact.setMiddleName(request.getMiddleName());
-            contact.setLastName(request.getLastName());
-            contact.setEmailAddress(request.getEmailAddress());
-            contact.setMobileNumber(request.getMobileNumber());
 
+            UserState contact = buildContactFromRequest(request, id);
             contactRepository.save(contact);
 
             Map<String, String> data = Map.of(
@@ -158,9 +143,21 @@ public class ContactResource {
         return data;
     }
 
+
     // Helper Method: Create contact object from request
     private UserState buildContactFromRequest(CreateUserRequest request) {
         UserState contact = new UserState();
+        contact.setFirstName(request.getFirstName());
+        contact.setMiddleName(request.getMiddleName());
+        contact.setLastName(request.getLastName());
+        contact.setEmailAddress(request.getEmailAddress());
+        contact.setMobileNumber(request.getMobileNumber());
+        return contact;
+    }
+
+    private UserState buildContactFromRequest(CreateUserRequest request, Long id) {
+        UserState contact = new UserState();
+        contact.setId(Math.toIntExact(id));
         contact.setFirstName(request.getFirstName());
         contact.setMiddleName(request.getMiddleName());
         contact.setLastName(request.getLastName());
