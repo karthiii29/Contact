@@ -10,9 +10,7 @@ public class APIMessages {
     public static final String SUCCESS_MESSAGE = "Contact created successfully";
     public static final String CONTACT_NOT_FOUND_ERROR = "Contact not found";
     public static final String CONTACT_FETCHED = "Contact fetched successfully";
-    public static final String USER_NOT_FOUND = "";
-    public static final String UPDATE_SUCCESS = "";
-    public static final String UPDATE_CONTACT_FAIL = "";
-    public static final String CONTACT_FETCH_FAIL = "";
+    public static final String UPDATE_SUCCESS = "Contact Updated successfully";
+    public static final String UPDATE_CONTACT_FAIL = "Failed to Update Contact";
 
 }
