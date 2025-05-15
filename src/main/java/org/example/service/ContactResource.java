@@ -81,7 +81,7 @@ public class ContactResource {
 
         if (existingContactOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>(false, APIMessages.USER_NOT_FOUND, null));
+                    .body(new ApiResponse<>(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null));
         }
 
         String validationError = CommonUtility.validateContactInfo(request.getEmailAddress(), request.getMobileNumber());
