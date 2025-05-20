@@ -2,6 +2,10 @@ package org.common.util;
 
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.common.service.UserState;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class CommonUtility {
     public static Response returnResponse(String responseJSON, boolean responseStatus) {
@@ -43,6 +47,18 @@ public class CommonUtility {
 
         return null; // Indicates no error
     }
+
+    public static Map<String, String> contactToMap(UserState contact) {
+        Map<String, String> contactData = new HashMap<>();
+        contactData.put("userId", String.valueOf(contact.getId()));
+        contactData.put("firstName", contact.getFirstName());
+        contactData.put("middleName", contact.getMiddleName());
+        contactData.put("lastName", contact.getLastName());
+        contactData.put("emailAddress", contact.getEmailAddress());
+        contactData.put("mobileNumber", contact.getMobileNumber());
+        return contactData;
+    }
+
 
 
 }
