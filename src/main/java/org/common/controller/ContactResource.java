@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
+import static org.common.util.CommonUtility.buildContactFromRequest;
+import static org.common.util.CommonUtility.contactToMap;
+
 @RestController
 @RequestMapping("/contacts")
 public class ContactResource {
@@ -66,7 +69,7 @@ public class ContactResource {
             }
 
             List<Map<String, String>> contactList = contacts.stream()
-                    .map(this::contactToMap)
+                    .map(CommonUtility::contactToMap)
                     .toList();
 
             return ResponseEntity.ok(new ApiResponse<>(true, "Contacts are fetched successfully", contactList));
@@ -76,7 +79,7 @@ public class ContactResource {
         }
     }
 
-    // Get All Contacts
+    // Search Contacts by firstName, lastName, emailAddress
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<Map<String, String>>>> searchContactsByFields(
             @RequestParam(required = false) String firstName,
@@ -169,37 +172,5 @@ public class ContactResource {
     }
 
     // Helper Method: Convert contact to map
-    private Map<String, String> contactToMap(UserState contact) {
-        Map<String, String> data = new HashMap<>();
-        data.put("ContactId", String.valueOf(contact.getId()));
-        data.put("firstName", contact.getFirstName());
-        data.put("middleName", contact.getMiddleName());
-        data.put("lastName", contact.getLastName());
-        data.put("emailAddress", contact.getEmailAddress());
-        data.put("mobileNumber", contact.getMobileNumber());
-        return data;
-    }
 
-
-    // Helper Method: Create contact object from request
-    private UserState buildContactFromRequest(CreateUserRequest request) {
-        UserState contact = new UserState();
-        contact.setFirstName(request.getFirstName());
-        contact.setMiddleName(request.getMiddleName());
-        contact.setLastName(request.getLastName());
-        contact.setEmailAddress(request.getEmailAddress());
-        contact.setMobileNumber(request.getMobileNumber());
-        return contact;
-    }
-
-    private UserState buildContactFromRequest(CreateUserRequest request, Long id) {
-        UserState contact = new UserState();
-        contact.setId(Math.toIntExact(id));
-        contact.setFirstName(request.getFirstName());
-        contact.setMiddleName(request.getMiddleName());
-        contact.setLastName(request.getLastName());
-        contact.setEmailAddress(request.getEmailAddress());
-        contact.setMobileNumber(request.getMobileNumber());
-        return contact;
-    }
 }

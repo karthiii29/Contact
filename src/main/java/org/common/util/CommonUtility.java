@@ -49,16 +49,38 @@ public class CommonUtility {
     }
 
     public static Map<String, String> contactToMap(UserState contact) {
-        Map<String, String> contactData = new HashMap<>();
-        contactData.put("userId", String.valueOf(contact.getId()));
-        contactData.put("firstName", contact.getFirstName());
-        contactData.put("middleName", contact.getMiddleName());
-        contactData.put("lastName", contact.getLastName());
-        contactData.put("emailAddress", contact.getEmailAddress());
-        contactData.put("mobileNumber", contact.getMobileNumber());
-        return contactData;
+        Map<String, String> data = new HashMap<>();
+        data.put("ContactId", String.valueOf(contact.getId()));
+        data.put("firstName", contact.getFirstName());
+        data.put("middleName", contact.getMiddleName());
+        data.put("lastName", contact.getLastName());
+        data.put("emailAddress", contact.getEmailAddress());
+        data.put("mobileNumber", contact.getMobileNumber());
+        return data;
     }
 
+
+    // Helper Method: Create contact object from request
+    public static UserState buildContactFromRequest(CreateUserRequest request) {
+        UserState contact = new UserState();
+        contact.setFirstName(request.getFirstName());
+        contact.setMiddleName(request.getMiddleName());
+        contact.setLastName(request.getLastName());
+        contact.setEmailAddress(request.getEmailAddress());
+        contact.setMobileNumber(request.getMobileNumber());
+        return contact;
+    }
+
+    public static UserState buildContactFromRequest(CreateUserRequest request, Long id) {
+        UserState contact = new UserState();
+        contact.setId(Math.toIntExact(id));
+        contact.setFirstName(request.getFirstName());
+        contact.setMiddleName(request.getMiddleName());
+        contact.setLastName(request.getLastName());
+        contact.setEmailAddress(request.getEmailAddress());
+        contact.setMobileNumber(request.getMobileNumber());
+        return contact;
+    }
 
 
 }
