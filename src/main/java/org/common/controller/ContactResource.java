@@ -56,25 +56,37 @@ public class ContactResource {
     }
 
     // Get All Contacts
-    @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getAllContacts() {
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<Map<String, String>>>> searchContactsByFields(
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String emailAddress) {
+
         try {
-            List<UserState> contacts = (List<UserState>) contactRepository.findAll();
+            List<UserState> contacts = contactRepository.searchByFields(
+                    firstName != null && !firstName.isBlank() ? firstName.trim() : null,
+                    lastName != null && !lastName.isBlank() ? lastName.trim() : null,
+                    emailAddress != null && !emailAddress.isBlank() ? emailAddress.trim() : null
+            );
+
             if (contacts.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(false, "No contacts found", null));
+                        .body(new ApiResponse<>(false, "No matching contacts found", null));
             }
 
-            List<Map<String, String>> contactList = contacts.stream()
-                    .map(this::contactToMap)
+            List<Map<String, String>> result = contacts.stream()
+                    .map(CommonUtility::contactToMap)
                     .toList();
 
-            return ResponseEntity.ok(new ApiResponse<>(true, "Contacts are fetched successfully", contactList));
+            return ResponseEntity.ok(new ApiResponse<>(true, "Contacts matched successfully", result));
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "Failed to fetch contacts", null));
+                    .body(new ApiResponse<>(false, "Failed to search contacts", null));
         }
     }
+
+
 
     // Update Contact
     @PutMapping("/update/{id}")
