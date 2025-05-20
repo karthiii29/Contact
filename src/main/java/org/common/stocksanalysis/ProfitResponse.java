@@ -1,4 +1,4 @@
-package org.example.stocksanalysis;
+package org.common.stocksanalysis;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude;

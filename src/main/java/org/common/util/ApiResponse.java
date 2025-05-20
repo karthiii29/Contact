@@ -1,4 +1,4 @@
-package org.example;
+package org.common.util;
 
 public class ApiResponse<T> {
     private boolean success;

@@ -1,7 +1,11 @@
-package org.example.service;
+package org.common.controller;
 
-import org.example.*;
-import org.example.repository.ContactRepository;
+import org.common.repository.ContactRepository;
+import org.common.service.UserState;
+import org.common.util.APIMessages;
+import org.common.util.ApiResponse;
+import org.common.util.CommonUtility;
+import org.common.util.CreateUserRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;

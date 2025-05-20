@@ -1,6 +1,6 @@
-package org.example.repository;
+package org.common.repository;
 
-import org.example.UserState;
+import org.common.service.UserState;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.Optional;

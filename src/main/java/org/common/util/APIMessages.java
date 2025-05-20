@@ -1,6 +1,4 @@
-package org.example;
-
-import jakarta.ws.rs.PUT;
+package org.common.util;
 
 public class APIMessages {
     public static final String MANDATORY_ERROR = "Mandatory param values should not be empty";

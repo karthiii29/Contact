@@ -1,10 +1,7 @@
-package org.example;
+package org.common.util;
 
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.springframework.http.ResponseEntity;
-
-import java.util.Map;
 
 public class CommonUtility {
     public static Response returnResponse(String responseJSON, boolean responseStatus) {

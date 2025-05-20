@@ -1,13 +1,9 @@
-package org.example;
+package org.common.service;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.io.IOException;
 
 @Entity
 public class UserState {

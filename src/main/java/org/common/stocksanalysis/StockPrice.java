@@ -1,4 +1,4 @@
-package org.example.stocksanalysis;
+package org.common.stocksanalysis;
 
 public class StockPrice {
 
