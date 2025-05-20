@@ -56,6 +56,27 @@ public class ContactResource {
     }
 
     // Get All Contacts
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getAllContacts() {
+        try {
+            List<UserState> contacts = (List<UserState>) contactRepository.findAll();
+            if (contacts.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(false, "No contacts found", null));
+            }
+
+            List<Map<String, String>> contactList = contacts.stream()
+                    .map(this::contactToMap)
+                    .toList();
+
+            return ResponseEntity.ok(new ApiResponse<>(true, "Contacts are fetched successfully", contactList));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "Failed to fetch contacts", null));
+        }
+    }
+
+    // Get All Contacts
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<Map<String, String>>>> searchContactsByFields(
             @RequestParam(required = false) String firstName,
