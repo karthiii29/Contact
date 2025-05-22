@@ -19,6 +19,9 @@ public class UserState {
     private String emailAddress;
     private String mobileNumber;
 
+    public UserState(String firstName, String middleName, String lastName, String emailAddress, String mobileNumber) {
+    }
+
     public long getId() {
         return id;
     }
