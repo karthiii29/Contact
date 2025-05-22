@@ -29,9 +29,6 @@ public class ContactResource {
     @Autowired
     private ContactRepository contactRepository;
 
-    @Autowired
-    private ContactValidator contactValidator;
-
     // Centralized response builder
     private <T> ResponseEntity<ApiResponse<T>> buildResponse(boolean success, String message, T data, HttpStatus status) {
         return new ResponseEntity<>(new ApiResponse<>(success, message, data), status);
@@ -42,7 +39,7 @@ public class ContactResource {
     @Async
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> createContact(
             @Valid @RequestBody CreateUserRequest request) {
-    String validationError = contactValidator.validateContactInfo(request.getEmailAddress(), request.getMobileNumber());
+    String validationError = CommonUtility.validateContactInfo(request.getFirstName(), request.getEmailAddress(), request.getMobileNumber());
         if (validationError != null) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, validationError, null, HttpStatus.BAD_REQUEST));
@@ -112,7 +109,7 @@ public class ContactResource {
                     buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
         }
 
-        String validationError = contactValidator.validateContactInfo(request.getEmailAddress(), request.getMobileNumber());
+        String validationError = CommonUtility.validateContactInfo(request.getFirstName(), request.getEmailAddress(), request.getMobileNumber());
         if (validationError != null) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, validationError, null, HttpStatus.BAD_REQUEST));
@@ -145,18 +142,5 @@ public class ContactResource {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleException(Exception e) {
         return buildResponse(false, "An unexpected error occurred: " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-}
-
-// Validator class for contact information
-class ContactValidator {
-    public String validateContactInfo(String emailAddress, String mobileNumber) {
-        if (emailAddress == null || !emailAddress.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            return "Invalid email address";
-        }
-        if (mobileNumber == null || !mobileNumber.matches("\\d{10}")) {
-            return "Invalid mobile number";
-        }
-        return null;
     }
 }

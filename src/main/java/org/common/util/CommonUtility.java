@@ -26,26 +26,26 @@ public class CommonUtility {
         if (email.isEmpty()) {
             return false;
         }
-        return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+        return email.matches("^[A-Za-z0-9+_.-]+@(.+)$");
     }
 
-    public static String validateContactInfo(String email, String mobile) {
-        boolean isEmailValid = CommonUtility.emailCheck(email);
-        boolean isMobileValid = CommonUtility.mobileNumberCheck(mobile);
-
-        if (!isEmailValid || !isMobileValid) {
-            StringBuilder errorMessage = new StringBuilder("Enter valid ");
-            if (!isEmailValid && !isMobileValid) {
-                errorMessage.append("email and mobile number.");
-            } else if (!isEmailValid) {
-                errorMessage.append("email address.");
-            } else {
-                errorMessage.append("mobile number.");
-            }
-            return errorMessage.toString();
+    public static String validateContactInfo(String firstName, String emailAddress, String mobileNumber) {
+        // Check if at least one of firstName or emailAddress is provided
+        if ((firstName == null || firstName.isBlank()) && (emailAddress == null || emailAddress.isBlank())) {
+            return "mandatory fields are missing";
         }
 
-        return null; // Indicates no error
+        // Validate emailAddress if provided
+        if (emailAddress != null && !emailAddress.isBlank() && !emailAddress.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            return "Invalid email address";
+        }
+
+        // Validate mobileNumber if provided
+        if (mobileNumber != null && !mobileNumber.isBlank() && !mobileNumber.matches("\\d{10}")) {
+            return "Invalid mobile number";
+        }
+
+        return null;
     }
 
     public static Map<String, String> contactToMap(UserState contact) {
