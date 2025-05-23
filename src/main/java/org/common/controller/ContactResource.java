@@ -22,6 +22,21 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+/**
+ * REST controller for managing contact information.
+ *
+ * This class exposes endpoints for:
+ * - Creating a new contact
+ * - Retrieving a contact by ID
+ * - Retrieving all contacts
+ * - Searching for contacts by fields
+ * - Updating an existing contact
+ * - Deleting a contact
+ *
+ * Utilizes asynchronous processing for write operations and response wrapping
+ * for consistent API structure. Includes caching for optimized read performance.
+ */
+
 @RestController
 @RequestMapping("/contacts")
 public class ContactResource {
