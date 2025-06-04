@@ -6,6 +6,15 @@ public class CreateUserRequest {
     private String lastName;
     private String emailAddress;
     private String mobileNumber;
+    private boolean favorites;
+
+    public boolean getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(boolean favorites) {
+        this.favorites = favorites;
+    }
 
     public String getFirstName() {
         return firstName;

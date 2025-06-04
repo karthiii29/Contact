@@ -8,39 +8,40 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CommonUtility {
-
-    private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@(.+)$";
-    private static final String MOBILE_REGEX = "(\\+91)?[0-9]{10}";
-    private static final String SIMPLE_MOBILE_REGEX = "\\d{10}";
-
     public static Response returnResponse(String responseJSON, boolean responseStatus) {
-        return responseStatus
-                ? Response.ok(responseJSON, MediaType.APPLICATION_JSON).build()
-                : Response.serverError().entity(responseJSON).build();
+        if (responseStatus) {
+            return Response.ok(responseJSON, MediaType.APPLICATION_JSON).build();
+
+        } else {
+            return Response.serverError().entity(responseJSON).build();
+        }
     }
 
     public static boolean mobileNumberCheck(String number) {
-        return number != null && number.matches(MOBILE_REGEX);
+        return number.matches("(\\+91)?[0-9]{10}");
     }
 
     public static boolean emailCheck(String email) {
-        return email != null && !email.isEmpty() && email.matches(EMAIL_REGEX);
+
+        if (email.isEmpty()) {
+            return false;
+        }
+        return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
 
     public static String validateContactInfo(String firstName, String emailAddress, String mobileNumber) {
-        boolean isFirstNameBlank = firstName == null || firstName.isBlank();
-        boolean isEmailBlank = emailAddress == null || emailAddress.isBlank();
-        boolean isMobileBlank = mobileNumber == null || mobileNumber.isBlank();
-
-        if (isFirstNameBlank && isEmailBlank) {
+        // Check if at least one of firstName or emailAddress is provided
+        if ((firstName == null || firstName.isBlank()) && (emailAddress == null || emailAddress.isBlank())) {
             return "mandatory fields are missing";
         }
 
-        if (!isEmailBlank && !emailAddress.matches(EMAIL_REGEX)) {
+        // Validate emailAddress if provided
+        if (emailAddress != null && !emailAddress.isBlank() && !emailAddress.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             return "Invalid email address";
         }
 
-        if (!isMobileBlank && !mobileNumber.matches(SIMPLE_MOBILE_REGEX)) {
+        // Validate mobileNumber if provided
+        if (mobileNumber != null && !mobileNumber.isBlank() && !mobileNumber.matches("\\d{10}")) {
             return "Invalid mobile number";
         }
 
@@ -58,20 +59,28 @@ public class CommonUtility {
         return data;
     }
 
+
     // Helper Method: Create contact object from request
     public static UserState buildContactFromRequest(CreateUserRequest request) {
-        return new UserState(
-                request.getFirstName(),
-                request.getMiddleName(),
-                request.getLastName(),
-                request.getEmailAddress(),
-                request.getMobileNumber()
-        );
+        UserState contact = new UserState();
+        contact.setFirstName(request.getFirstName());
+        contact.setMiddleName(request.getMiddleName());
+        contact.setLastName(request.getLastName());
+        contact.setEmailAddress(request.getEmailAddress());
+        contact.setMobileNumber(request.getMobileNumber());
+        return contact;
     }
 
     public static UserState buildContactFromRequest(CreateUserRequest request, Long id) {
-        UserState contact = buildContactFromRequest(request);
+        UserState contact = new UserState();
         contact.setId(Math.toIntExact(id));
+        contact.setFirstName(request.getFirstName());
+        contact.setMiddleName(request.getMiddleName());
+        contact.setLastName(request.getLastName());
+        contact.setEmailAddress(request.getEmailAddress());
+        contact.setMobileNumber(request.getMobileNumber());
         return contact;
     }
+
+
 }

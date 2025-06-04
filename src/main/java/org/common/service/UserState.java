@@ -19,8 +19,10 @@ public class UserState {
     private String emailAddress;
     private String mobileNumber;
 
-    public UserState(String firstName, String middleName, String lastName, String emailAddress, String mobileNumber) {
+    public UserState() {
     }
+
+    private boolean favorites;
 
     public long getId() {
         return id;
@@ -68,5 +70,13 @@ public class UserState {
 
     public void setMobileNumber(String mobileNumber) {
         this.mobileNumber = mobileNumber;
+    }
+
+    public boolean isFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(boolean favorites) {
+        this.favorites = favorites;
     }
 }
