@@ -5,6 +5,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 public class UserState {
 
@@ -24,6 +27,11 @@ public class UserState {
 
     private boolean favorites;
 
+<<<<<<< HEAD
+=======
+    private ArrayList<String> categories;
+
+>>>>>>> e354414 (Basic Category feature adding)
     public long getId() {
         return id;
     }
@@ -79,4 +87,15 @@ public class UserState {
     public void setFavorites(boolean favorites) {
         this.favorites = favorites;
     }
+<<<<<<< HEAD
+=======
+
+    public ArrayList<String> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(ArrayList<String> categories) {
+        this.categories = categories;
+    }
+>>>>>>> e354414 (Basic Category feature adding)
 }

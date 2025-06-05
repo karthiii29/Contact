@@ -4,7 +4,6 @@ import org.common.repository.ContactRepository;
 import org.common.service.UserState;
 import org.common.util.APIMessages;
 import org.common.util.ApiResponse;
-import org.common.util.CreateUserRequest;
 import org.common.util.CommonUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -53,16 +52,15 @@ public class ContactResource {
     @PostMapping("/create")
     @Async
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> createContact(
-            @Valid @RequestBody CreateUserRequest request) {
+            @Valid @RequestBody UserState request) {
     String validationError = CommonUtility.validateContactInfo(request.getFirstName(), request.getEmailAddress(), request.getMobileNumber());
         if (validationError != null) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, validationError, null, HttpStatus.BAD_REQUEST));
         }
 
-        UserState contact = CommonUtility.buildContactFromRequest(request);
-        contactRepository.save(contact);
-        Map<String, String> data = Map.of("contactId", String.valueOf(contact.getId()), "status", "success");
+        contactRepository.save(request);
+        Map<String, String> data = Map.of("contactId", String.valueOf(request.getId()), "status", "success");
         return CompletableFuture.completedFuture(
                 buildResponse(true, APIMessages.SUCCESS_MESSAGE, data, HttpStatus.OK));
     }
@@ -118,7 +116,7 @@ public class ContactResource {
     @CacheEvict(value = {"contacts", "allContacts"}, allEntries = true)
     @Async
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> updateContact(
-            @PathVariable Long id, @Valid @RequestBody CreateUserRequest request) {
+            @PathVariable Long id, @Valid @RequestBody UserState request) {
         if (contactRepository.findById(id).isEmpty()) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
@@ -130,9 +128,8 @@ public class ContactResource {
                     buildResponse(false, validationError, null, HttpStatus.BAD_REQUEST));
         }
 
-        UserState contact = CommonUtility.buildContactFromRequest(request, id);
-        contactRepository.save(contact);
-        Map<String, String> data = Map.of("contactId", String.valueOf(contact.getId()), "status", "updated");
+        contactRepository.save(request);
+        Map<String, String> data = Map.of("contactId", String.valueOf(request.getId()), "status", "updated");
         return CompletableFuture.completedFuture(
                 buildResponse(true, APIMessages.UPDATE_SUCCESS, data, HttpStatus.OK));
     }
@@ -158,4 +155,6 @@ public class ContactResource {
     public ResponseEntity<ApiResponse<Object>> handleException(Exception e) {
         return buildResponse(false, "An unexpected error occurred: " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+
 }

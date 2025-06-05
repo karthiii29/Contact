@@ -24,5 +24,4 @@ public interface ContactRepository extends CrudRepository<UserState, Integer> {
             @Param("emailAddress") String emailAddress
     );
 
-
 }

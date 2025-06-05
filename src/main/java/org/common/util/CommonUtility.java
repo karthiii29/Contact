@@ -59,6 +59,7 @@ public class CommonUtility {
         return data;
     }
 
+<<<<<<< HEAD
 
     // Helper Method: Create contact object from request
     public static UserState buildContactFromRequest(CreateUserRequest request) {
@@ -83,4 +84,7 @@ public class CommonUtility {
     }
 
 
+=======
+
+>>>>>>> e354414 (Basic Category feature adding)
 }
