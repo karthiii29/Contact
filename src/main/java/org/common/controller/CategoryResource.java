@@ -8,10 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -20,78 +17,85 @@ import java.util.stream.Collectors;
 public class CategoryResource {
 
     @Autowired
-    private CategoryRepository categoryService;
+    private CategoryRepository categoryRepository;
 
-    private Map<String, Object> buildResponse(boolean success, String message, Object data, HttpStatus notFound) {
+    private ResponseEntity<Map<String, Object>> buildResponse(boolean success, String message, Object data, HttpStatus status) {
         Map<String, Object> response = new HashMap<>();
         response.put("success", success);
         response.put("message", message);
         response.put("data", data);
-        return response;
+        return new ResponseEntity<>(response, status);
     }
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<Map<String, Object>> createCategory(@RequestBody String categoryName) {
         if (categoryName == null || categoryName.trim().isEmpty()) {
-            return new ResponseEntity<>(buildResponse(false, "Category name cannot be empty", null, HttpStatus.NOT_FOUND), HttpStatus.BAD_REQUEST);
+            return buildResponse(false, "Category name cannot be empty", null, HttpStatus.BAD_REQUEST);
         }
 
-        Category category = new Category(categoryName);
-
-        categoryService.save(category);
+        Category category = new Category(categoryName.trim());
+        categoryRepository.save(category);
 
         Map<String, String> data = Map.of("categoryId", category.getCategoryId(), "status", "success");
-        return new ResponseEntity<>(buildResponse(true, "Category created successfully", data, HttpStatus.NOT_FOUND), HttpStatus.OK);
+        return buildResponse(true, "Category created successfully", data, HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getCategoryById(@PathVariable String id) {
-        Optional<Category> category = categoryService.findById(id);
+        Optional<Category> category = categoryRepository.findById(id);
         if (category.isEmpty()) {
-            return new ResponseEntity<>(buildResponse(false, "Category not found", null, HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
+            return buildResponse(false, "Category not found", null, HttpStatus.NOT_FOUND);
         }
-        Map<String, String> data = Map.of("categoryId", category.get().getCategoryId(), "categoryName", category.get().getCategoryName());
-        return new ResponseEntity<>(buildResponse(true, "Category fetched successfully", data, HttpStatus.NOT_FOUND), HttpStatus.OK);
+
+        Map<String, String> data = Map.of(
+                "categoryId", category.get().getCategoryId(),
+                "categoryName", category.get().getCategoryName()
+        );
+        return buildResponse(true, "Category fetched successfully", data, HttpStatus.OK);
     }
 
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<Map<String, Object>> getAllCategories() {
-        List<Category> categories = categoryService.findAll();
+        List<Category> categories = categoryRepository.findAll();
         if (categories.isEmpty()) {
-            return new ResponseEntity<>(buildResponse(false, "No categories found", null, HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
+            return buildResponse(false, "No categories found", null, HttpStatus.NOT_FOUND);
         }
+
         List<Map<String, String>> data = categories.stream()
                 .map(c -> Map.of("categoryId", c.getCategoryId(), "categoryName", c.getCategoryName()))
                 .collect(Collectors.toList());
-        return new ResponseEntity<>(buildResponse(true, "Categories fetched successfully", data, HttpStatus.NOT_FOUND), HttpStatus.OK);
+
+        return buildResponse(true, "Categories fetched successfully", data, HttpStatus.OK);
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> updateCategory(@PathVariable String id, @RequestBody String categoryName) {
         if (categoryName == null || categoryName.trim().isEmpty()) {
-            return new ResponseEntity<>(buildResponse(false, "Category name cannot be empty", null, HttpStatus.NOT_FOUND), HttpStatus.BAD_REQUEST);
+            return buildResponse(false, "Category name cannot be empty", null, HttpStatus.BAD_REQUEST);
         }
-        Category category = new Category(id, categoryName.trim());
-        categoryService.save(category);
-        Map<String, String> data = Map.of("categoryId", category.getCategoryId(), "status", "updated");
-        return new ResponseEntity<>(buildResponse(true, "Category updated successfully", data, HttpStatus.NOT_FOUND), HttpStatus.OK);
+
+        Category updatedCategory = new Category(id, categoryName.trim());
+        categoryRepository.save(updatedCategory);
+
+        Map<String, String> data = Map.of("categoryId", id, "status", "updated");
+        return buildResponse(true, "Category updated successfully", data, HttpStatus.OK);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public CompletableFuture<Map<String, Object>> deleteCategory(@PathVariable String id) {
-        if (categoryService.findById(id).isEmpty()) {
-            return CompletableFuture.completedFuture(
-                    buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteCategory(@PathVariable String id) {
+        Optional<Category> category = categoryRepository.findById(id);
+        if (category.isEmpty()) {
+            return buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND);
         }
 
-        categoryService.deleteById(id);
-        Map<String, String> data = Map.of("categoryId", String.valueOf(id), "status", "deleted");
-        return CompletableFuture.completedFuture(
-                buildResponse(true, "Contact deleted successfully", data, HttpStatus.OK));
+        categoryRepository.deleteById(id);
+
+        Map<String, String> data = Map.of("categoryId", id, "status", "deleted");
+        return buildResponse(true, "Category deleted successfully", data, HttpStatus.OK);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleException(Exception e) {
-        return new ResponseEntity<>(buildResponse(false, "An error occurred: " + e.getMessage(), null, HttpStatus.NOT_FOUND), HttpStatus.INTERNAL_SERVER_ERROR);
+        return buildResponse(false, "An error occurred: " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

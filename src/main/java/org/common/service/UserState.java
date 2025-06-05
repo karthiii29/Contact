@@ -27,11 +27,8 @@ public class UserState {
 
     private boolean favorites;
 
-<<<<<<< HEAD
-=======
     private ArrayList<String> categories;
 
->>>>>>> e354414 (Basic Category feature adding)
     public long getId() {
         return id;
     }
@@ -87,8 +84,6 @@ public class UserState {
     public void setFavorites(boolean favorites) {
         this.favorites = favorites;
     }
-<<<<<<< HEAD
-=======
 
     public ArrayList<String> getCategories() {
         return categories;
@@ -97,5 +92,4 @@ public class UserState {
     public void setCategories(ArrayList<String> categories) {
         this.categories = categories;
     }
->>>>>>> e354414 (Basic Category feature adding)
 }
