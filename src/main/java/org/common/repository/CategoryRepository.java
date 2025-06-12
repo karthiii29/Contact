@@ -1,16 +1,15 @@
 package org.common.repository;
 
 import org.common.service.Category;
-import org.common.service.UserState;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface CategoryRepository extends JpaRepository<Category, String> {
+public interface CategoryRepository extends JpaRepository<Category, Integer> {
 
-    Optional<UserState> findById(Long id);
+    Optional<Category> findById(Integer id);
 
     void deleteById(Long id);
 

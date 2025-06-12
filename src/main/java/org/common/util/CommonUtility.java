@@ -2,6 +2,8 @@ package org.common.util;
 
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.apache.catalina.User;
+import org.common.service.Category;
 import org.common.service.UserState;
 
 import java.util.HashMap;
@@ -59,10 +61,15 @@ public class CommonUtility {
         return data;
     }
 
-<<<<<<< HEAD
+    public static Map<String, String> categoryToMap(Category category) {
+        Map<String, String> data = new HashMap<>();
+        data.put("CategoryId", String.valueOf(category.getCategoryId()));
+        data.put("CategoryName", category.getCategoryName());
+        return data;
+    }
 
     // Helper Method: Create contact object from request
-    public static UserState buildContactFromRequest(CreateUserRequest request) {
+    public static UserState buildContactFromRequest(UserState request) {
         UserState contact = new UserState();
         contact.setFirstName(request.getFirstName());
         contact.setMiddleName(request.getMiddleName());
@@ -72,7 +79,7 @@ public class CommonUtility {
         return contact;
     }
 
-    public static UserState buildContactFromRequest(CreateUserRequest request, Long id) {
+    public static UserState buildContactFromRequest(UserState request, Long id) {
         UserState contact = new UserState();
         contact.setId(Math.toIntExact(id));
         contact.setFirstName(request.getFirstName());
@@ -83,8 +90,17 @@ public class CommonUtility {
         return contact;
     }
 
+    public static Category buildCategoryFromRequest(Category request) {
+        Category category = new Category();
+        category.setCategoryName(request.getCategoryName());
+        return category;
+    }
 
-=======
+    public static Category buildCategoryFromRequest(Category request, Integer id) {
+        Category category = new Category();
+        category.setCategoryId(id);
+        category.setCategoryName(request.getCategoryName());
+        return category;
+    }
 
->>>>>>> e354414 (Basic Category feature adding)
 }

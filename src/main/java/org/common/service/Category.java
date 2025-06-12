@@ -1,32 +1,31 @@
 package org.common.service;
 
-import java.time.Instant;
-import java.util.concurrent.ThreadLocalRandom;
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "categories") // optional, if you want to customize table name
 public class Category {
 
-    private String categoryId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer categoryId;
+
     private String categoryName;
 
-    public Category(String categoryName) {
-        long timestamp = Instant.now().toEpochMilli(); // current time in ms
-        int random = ThreadLocalRandom.current().nextInt(10000, 99999); // 5-digit random
-        this.categoryId = String.valueOf(timestamp) + random;
+    public Category() {
+    }
+
+    public Category(Integer categoryId, String categoryName) {
+        this.categoryId = categoryId;
         this.categoryName = categoryName;
     }
 
-    public Category(String categoryId, String categoryName) {
-        long timestamp = Instant.now().toEpochMilli(); // current time in ms
-        int random = ThreadLocalRandom.current().nextInt(10000, 99999); // 5-digit random
-        this.categoryId = String.valueOf(timestamp) + random;
-        this.categoryName = categoryName;
-    }
-
-    public String getCategoryId() {
+    // Getters and setters
+    public Integer getCategoryId() {
         return categoryId;
     }
 
-    public void setCategoryId(String categoryId) {
+    public void setCategoryId(Integer categoryId) {
         this.categoryId = categoryId;
     }
 
