@@ -21,6 +21,20 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+/**
+ * REST controller for managing category information.
+ *
+ * This class exposes endpoints for:
+ * - Creating a new category
+ * - Retrieving a category by ID
+ * - Retrieving all categories
+ * - Updating an existing category
+ * - Deleting a category
+ *
+ * Utilizes asynchronous processing for write operations and response wrapping
+ * for consistent API structure. Includes caching for optimized read performance.
+ */
+
 @RestController
 @RequestMapping("/categories")
 public class CategoryResource {
