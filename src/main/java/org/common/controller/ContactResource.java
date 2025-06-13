@@ -1,10 +1,10 @@
 package org.common.controller;
 
+import jakarta.ws.rs.PathParam;
 import org.common.repository.ContactRepository;
 import org.common.service.UserState;
 import org.common.util.APIMessages;
 import org.common.util.ApiResponse;
-import org.common.util.CreateUserRequest;
 import org.common.util.CommonUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -16,9 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import javax.validation.Valid;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -51,26 +49,25 @@ public class ContactResource {
 
     // Create Contact
     @PostMapping("/create")
-    @Async
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> createContact(
-            @Valid @RequestBody CreateUserRequest request) {
+            @Valid @RequestBody UserState request) {
     String validationError = CommonUtility.validateContactInfo(request.getFirstName(), request.getEmailAddress(), request.getMobileNumber());
         if (validationError != null) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, validationError, null, HttpStatus.BAD_REQUEST));
         }
 
-        UserState contact = CommonUtility.buildContactFromRequest(request);
-        contactRepository.save(contact);
-        Map<String, String> data = Map.of("contactId", String.valueOf(contact.getId()), "status", "success");
+        UserState userState = CommonUtility.buildContactFromRequest(request);
+
+        contactRepository.save(userState);
+        Map<String, String> data = Map.of("contactId", String.valueOf(request.getId()), "status", "success");
         return CompletableFuture.completedFuture(
                 buildResponse(true, APIMessages.SUCCESS_MESSAGE, data, HttpStatus.OK));
     }
 
     // Get Contact by ID
     @GetMapping("/{id}")
-    @Cacheable(value = "contacts", key = "#id")
-    public ResponseEntity<ApiResponse<Map<String, String>>> getContactById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> getContactById(@PathVariable Integer id) {
         Optional<UserState> contact = contactRepository.findById(id);
         return contact.map(c -> buildResponse(true, APIMessages.CONTACT_FETCHED, CommonUtility.contactToMap(c), HttpStatus.OK))
                 .orElseGet(() -> buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
@@ -78,7 +75,6 @@ public class ContactResource {
 
     // Get All Contacts
     @GetMapping("/all")
-    @Cacheable(value = "allContacts")
     public ResponseEntity<ApiResponse<List<Map<String, String>>>> getAllContacts() {
         List<UserState> contacts = (List<UserState>) contactRepository.findAll();
         if (contacts.isEmpty()) {
@@ -115,10 +111,8 @@ public class ContactResource {
 
     // Update Contact
     @PutMapping("/update/{id}")
-    @CacheEvict(value = {"contacts", "allContacts"}, allEntries = true)
-    @Async
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> updateContact(
-            @PathVariable Long id, @Valid @RequestBody CreateUserRequest request) {
+            @PathVariable Integer id, @Valid @RequestBody UserState request) {
         if (contactRepository.findById(id).isEmpty()) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
@@ -130,18 +124,17 @@ public class ContactResource {
                     buildResponse(false, validationError, null, HttpStatus.BAD_REQUEST));
         }
 
-        UserState contact = CommonUtility.buildContactFromRequest(request, id);
-        contactRepository.save(contact);
-        Map<String, String> data = Map.of("contactId", String.valueOf(contact.getId()), "status", "updated");
+        UserState userState = CommonUtility.buildContactFromRequest(request, id);
+
+        contactRepository.save(userState);
+        Map<String, String> data = Map.of("contactId", String.valueOf(request.getId()), "status", "updated");
         return CompletableFuture.completedFuture(
                 buildResponse(true, APIMessages.UPDATE_SUCCESS, data, HttpStatus.OK));
     }
 
     // Delete Contact
     @DeleteMapping("/delete/{id}")
-    @CacheEvict(value = {"contacts", "allContacts"}, allEntries = true)
-    @Async
-    public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> deleteContactById(@PathVariable Long id) {
+    public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> deleteContactById(@PathVariable Integer id) {
         if (contactRepository.findById(id).isEmpty()) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
@@ -158,4 +151,26 @@ public class ContactResource {
     public ResponseEntity<ApiResponse<Object>> handleException(Exception e) {
         return buildResponse(false, "An unexpected error occurred: " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    // List contact based on category
+
+    @GetMapping("/category/{id}")
+    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getAllContactsByCategory(@PathVariable Integer id) {
+        String categoryId = String.valueOf(id);
+
+        List<Map<String, String>> filteredContacts = ((List<UserState>) contactRepository.findAll()).stream()
+                .filter(c -> c.getCategories() != null &&
+                        c.getCategories().stream()
+                                .map(String::trim)
+                                .anyMatch(cat -> cat.equals(categoryId)))
+                .map(CommonUtility::contactToMap)
+                .toList();
+
+        if (filteredContacts.isEmpty()) {
+            return buildResponse(false, "No contacts found in this category", null, HttpStatus.NOT_FOUND);
+        }
+
+        return buildResponse(true, "Contacts fetched successfully", filteredContacts, HttpStatus.OK);
+    }
+
 }

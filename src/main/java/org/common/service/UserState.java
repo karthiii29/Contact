@@ -1,11 +1,11 @@
 package org.common.service;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
+import java.util.ArrayList;
 
 @Entity
+@Table(name = "contacts")
 public class UserState {
 
     @Id
@@ -24,7 +24,9 @@ public class UserState {
 
     private boolean favorites;
 
-    public long getId() {
+    private ArrayList<String> categories;
+
+    public Integer getId() {
         return id;
     }
 
@@ -78,5 +80,13 @@ public class UserState {
 
     public void setFavorites(boolean favorites) {
         this.favorites = favorites;
+    }
+
+    public ArrayList<String> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(ArrayList<String> categories) {
+        this.categories = categories;
     }
 }
