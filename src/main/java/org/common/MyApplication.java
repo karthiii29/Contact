@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
 @EnableJpaRepositories(basePackages = "org.common.repository")
-@EntityScan(basePackages = "org.common.model") // wherever your Category entity is
+@EntityScan(basePackages = "org.common.service") // wherever your Category entity is
 
 public class MyApplication {
 

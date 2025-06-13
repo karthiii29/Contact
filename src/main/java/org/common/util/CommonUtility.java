@@ -52,12 +52,30 @@ public class CommonUtility {
 
     public static Map<String, String> contactToMap(UserState contact) {
         Map<String, String> data = new HashMap<>();
+        // Mandatory fields
         data.put("ContactId", String.valueOf(contact.getId()));
         data.put("firstName", contact.getFirstName());
-        data.put("middleName", contact.getMiddleName());
-        data.put("lastName", contact.getLastName());
         data.put("emailAddress", contact.getEmailAddress());
-        data.put("mobileNumber", contact.getMobileNumber());
+
+        // Optional fields
+        if (contact.getMiddleName() != null && !contact.getMiddleName().isBlank()) {
+            data.put("middleName", contact.getMiddleName());
+        }
+        if (contact.getLastName() != null && !contact.getLastName().isBlank()) {
+            data.put("lastName", contact.getLastName());
+        }
+        if (contact.getMobileNumber() != null && !contact.getMobileNumber().isBlank()) {
+            data.put("mobileNumber", contact.getMobileNumber());
+        }
+
+        // Always include favorite (boolean has default value: false if not set)
+        data.put("favorite", String.valueOf(contact.isFavorites()));
+
+        // Only include categories if not null or empty
+        if (contact.getCategories() != null && !contact.getCategories().isEmpty()) {
+            data.put("categories", String.join(",", contact.getCategories()));
+        }
+
         return data;
     }
 
@@ -76,10 +94,12 @@ public class CommonUtility {
         contact.setLastName(request.getLastName());
         contact.setEmailAddress(request.getEmailAddress());
         contact.setMobileNumber(request.getMobileNumber());
+        contact.setFavorites(request.isFavorites());
+        contact.setCategories(request.getCategories());
         return contact;
     }
 
-    public static UserState buildContactFromRequest(UserState request, Long id) {
+    public static UserState buildContactFromRequest(UserState request, Integer id) {
         UserState contact = new UserState();
         contact.setId(Math.toIntExact(id));
         contact.setFirstName(request.getFirstName());
@@ -87,6 +107,8 @@ public class CommonUtility {
         contact.setLastName(request.getLastName());
         contact.setEmailAddress(request.getEmailAddress());
         contact.setMobileNumber(request.getMobileNumber());
+        contact.setFavorites(request.isFavorites());
+        contact.setCategories(request.getCategories());
         return contact;
     }
 

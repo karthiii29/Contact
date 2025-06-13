@@ -67,7 +67,7 @@ public class ContactResource {
 
     // Get Contact by ID
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Map<String, String>>> getContactById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> getContactById(@PathVariable Integer id) {
         Optional<UserState> contact = contactRepository.findById(id);
         return contact.map(c -> buildResponse(true, APIMessages.CONTACT_FETCHED, CommonUtility.contactToMap(c), HttpStatus.OK))
                 .orElseGet(() -> buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
@@ -112,7 +112,7 @@ public class ContactResource {
     // Update Contact
     @PutMapping("/update/{id}")
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> updateContact(
-            @PathVariable Long id, @Valid @RequestBody UserState request) {
+            @PathVariable Integer id, @Valid @RequestBody UserState request) {
         if (contactRepository.findById(id).isEmpty()) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
@@ -134,7 +134,7 @@ public class ContactResource {
 
     // Delete Contact
     @DeleteMapping("/delete/{id}")
-    public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> deleteContactById(@PathVariable Long id) {
+    public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> deleteContactById(@PathVariable Integer id) {
         if (contactRepository.findById(id).isEmpty()) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
@@ -156,13 +156,15 @@ public class ContactResource {
 
     @GetMapping("/category/{id}")
     public ResponseEntity<ApiResponse<List<Map<String, String>>>> getAllContactsByCategory(@PathVariable Integer id) {
-        String categoryId = id.toString();
+        String categoryId = String.valueOf(id);
 
-        // Filter contacts that contain the given categoryId
         List<Map<String, String>> filteredContacts = ((List<UserState>) contactRepository.findAll()).stream()
-                .filter(c -> c.getCategories() != null && c.getCategories().contains(categoryId))
+                .filter(c -> c.getCategories() != null &&
+                        c.getCategories().stream()
+                                .map(String::trim)
+                                .anyMatch(cat -> cat.equals(categoryId)))
                 .map(CommonUtility::contactToMap)
-                .toList(); // Java 16+, else use .collect(Collectors.toList())
+                .toList();
 
         if (filteredContacts.isEmpty()) {
             return buildResponse(false, "No contacts found in this category", null, HttpStatus.NOT_FOUND);

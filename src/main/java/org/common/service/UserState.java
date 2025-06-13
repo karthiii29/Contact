@@ -1,14 +1,11 @@
 package org.common.service;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.util.ArrayList;
-import java.util.List;
 
 @Entity
+@Table(name = "contacts")
 public class UserState {
 
     @Id
@@ -29,7 +26,7 @@ public class UserState {
 
     private ArrayList<String> categories;
 
-    public long getId() {
+    public Integer getId() {
         return id;
     }
 
