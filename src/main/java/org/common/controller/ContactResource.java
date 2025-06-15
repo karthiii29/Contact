@@ -1,17 +1,13 @@
 package org.common.controller;
 
-import jakarta.ws.rs.PathParam;
 import org.common.repository.ContactRepository;
 import org.common.service.UserState;
 import org.common.util.APIMessages;
 import org.common.util.ApiResponse;
 import org.common.util.CommonUtility;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -172,5 +168,23 @@ public class ContactResource {
 
         return buildResponse(true, "Contacts fetched successfully", filteredContacts, HttpStatus.OK);
     }
+
+    @GetMapping("/favourite")
+    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getAllFavouriteContacts() {
+        List<UserState> allContacts = (List<UserState>) contactRepository.findAll();
+
+        List<Map<String, String>> favouriteContacts = allContacts.stream()
+                .filter(UserState::isFavorites)
+                .map(CommonUtility::contactToMap)
+                .collect(Collectors.toList()).reversed();
+
+        if (favouriteContacts.isEmpty()) {
+            return buildResponse(false, "No favourite contacts found", null, HttpStatus.NOT_FOUND);
+        }
+
+        return buildResponse(true, "Favourite contacts fetched successfully", favouriteContacts, HttpStatus.OK);
+    }
+
+
 
 }
