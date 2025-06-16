@@ -43,11 +43,13 @@ public class ContactResource {
         return new ResponseEntity<>(new ApiResponse<>(success, message, data), status);
     }
 
-    // Create Contact
     @PostMapping("/create")
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> createContact(
             @Valid @RequestBody UserState request) {
-    String validationError = CommonUtility.validateContactInfo(request.getFirstName(), request.getEmailAddress(), request.getMobileNumber());
+
+        String validationError = CommonUtility.validateContactInfo(
+                request.getFirstName(), request.getEmailAddress(), request.getMobileNumber());
+
         if (validationError != null) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, validationError, null, HttpStatus.BAD_REQUEST));
@@ -55,8 +57,14 @@ public class ContactResource {
 
         UserState userState = CommonUtility.buildContactFromRequest(request);
 
-        contactRepository.save(userState);
-        Map<String, String> data = Map.of("contactId", String.valueOf(request.getId()), "status", "success");
+        // Save the contact and get the saved entity with the generated ID
+        UserState savedContact = contactRepository.save(userState);
+
+        Map<String, String> data = Map.of(
+                "contactId", String.valueOf(savedContact.getId()),
+                "status", "success"
+        );
+
         return CompletableFuture.completedFuture(
                 buildResponse(true, APIMessages.SUCCESS_MESSAGE, data, HttpStatus.OK));
     }
@@ -105,16 +113,18 @@ public class ContactResource {
         return buildResponse(true, "Contacts matched successfully", result, HttpStatus.OK);
     }
 
-    // Update Contact
     @PutMapping("/update/{id}")
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> updateContact(
             @PathVariable Integer id, @Valid @RequestBody UserState request) {
+
         if (contactRepository.findById(id).isEmpty()) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
         }
 
-        String validationError = CommonUtility.validateContactInfo(request.getFirstName(), request.getEmailAddress(), request.getMobileNumber());
+        String validationError = CommonUtility.validateContactInfo(
+                request.getFirstName(), request.getEmailAddress(), request.getMobileNumber());
+
         if (validationError != null) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, validationError, null, HttpStatus.BAD_REQUEST));
@@ -122,8 +132,14 @@ public class ContactResource {
 
         UserState userState = CommonUtility.buildContactFromRequest(request, id);
 
-        contactRepository.save(userState);
-        Map<String, String> data = Map.of("contactId", String.valueOf(request.getId()), "status", "updated");
+        // Save updated contact and get the persisted entity
+        UserState updatedContact = contactRepository.save(userState);
+
+        Map<String, String> data = Map.of(
+                "contactId", String.valueOf(updatedContact.getId()),
+                "status", "updated"
+        );
+
         return CompletableFuture.completedFuture(
                 buildResponse(true, APIMessages.UPDATE_SUCCESS, data, HttpStatus.OK));
     }
@@ -170,21 +186,24 @@ public class ContactResource {
     }
 
     @GetMapping("/favourite")
-    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getAllFavouriteContacts() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllFavouriteContacts() {
         List<UserState> allContacts = (List<UserState>) contactRepository.findAll();
 
         List<Map<String, String>> favouriteContacts = allContacts.stream()
                 .filter(UserState::isFavorites)
                 .map(CommonUtility::contactToMap)
-                .collect(Collectors.toList()).reversed();
+                .collect(Collectors.toList());
 
         if (favouriteContacts.isEmpty()) {
             return buildResponse(false, "No favourite contacts found", null, HttpStatus.NOT_FOUND);
         }
 
-        return buildResponse(true, "Favourite contacts fetched successfully", favouriteContacts, HttpStatus.OK);
+        // Create a response data map with count and contacts
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("count", favouriteContacts.size());
+        responseData.put("contacts", favouriteContacts);
+
+        return buildResponse(true, "Favourite contacts fetched successfully", responseData, HttpStatus.OK);
     }
-
-
 
 }
