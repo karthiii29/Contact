@@ -170,19 +170,24 @@ public class ContactResource {
     }
 
     @GetMapping("/favourite")
-    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getAllFavouriteContacts() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllFavouriteContacts() {
         List<UserState> allContacts = (List<UserState>) contactRepository.findAll();
 
         List<Map<String, String>> favouriteContacts = allContacts.stream()
                 .filter(UserState::isFavorites)
                 .map(CommonUtility::contactToMap)
-                .collect(Collectors.toList()).reversed();
+                .collect(Collectors.toList());
 
         if (favouriteContacts.isEmpty()) {
             return buildResponse(false, "No favourite contacts found", null, HttpStatus.NOT_FOUND);
         }
 
-        return buildResponse(true, "Favourite contacts fetched successfully", favouriteContacts, HttpStatus.OK);
+        // Create a response data map with count and contacts
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("count", favouriteContacts.size());
+        responseData.put("contacts", favouriteContacts);
+
+        return buildResponse(true, "Favourite contacts fetched successfully", responseData, HttpStatus.OK);
     }
 
 
