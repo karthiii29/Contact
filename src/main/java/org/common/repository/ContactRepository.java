@@ -7,8 +7,9 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface ContactRepository extends CrudRepository<UserState, Integer> {
+public interface ContactRepository extends CrudRepository<UserState, Long> {
 
     Optional<UserState> findById(Long id);
 

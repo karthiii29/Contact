@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -52,17 +53,26 @@ public class CategoryResource {
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> createCategory(
             @Valid @RequestBody Category request) {
 
-        categoryRepository.save(request);
+        Category category = CommonUtility.buildCategoryFromRequest(request);
 
-        Map<String, String> data = Map.of("categoryId", String.valueOf(request.getCategoryId()), "status", "success");
+        // Set generated long ID
+        category.setCategoryId(CommonUtility.generateUniqueContactId());
+
+        Category savedCategory = categoryRepository.save(category);
+
+        Map<String, String> data = Map.of(
+                "contactId", String.valueOf(savedCategory.getCategoryId()),
+                "status", "success"
+        );
+
         return CompletableFuture.completedFuture(
-                buildResponse(true, "Category created successfully", data, HttpStatus.OK));
+                buildResponse(true, APIMessages.SUCCESS_MESSAGE, data, HttpStatus.OK));
     }
 
     // Get Category by ID
     @GetMapping("/{id}")
     @Cacheable(value = "category", key = "#id")
-    public ResponseEntity<ApiResponse<Optional<Category>>> getCategoryById(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Optional<Category>>> getCategoryById(@PathVariable Long id) {
         Optional<Category> category = categoryRepository.findById(id);
         return category.map(c -> buildResponse(true, APIMessages.CONTACT_FETCHED, category, HttpStatus.OK))
                 .orElseGet(() -> buildResponse(false, "Category not found", null, HttpStatus.NOT_FOUND));
@@ -71,30 +81,37 @@ public class CategoryResource {
     // Get All Categories
     @GetMapping("/all")
     @Cacheable(value = "allCategories")
-    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getAllCategories() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllCategories() {
         List<Category> categories = (List<Category>) categoryRepository.findAll();
 
         if (categories.isEmpty()) {
             return buildResponse(false, "No Categories found", null, HttpStatus.NOT_FOUND);
         }
 
-        List<Map<String, String>> contactList = categories.stream()
+        List<Map<String, String>> categoryList = categories.stream()
                 .map(CommonUtility::categoryToMap)
                 .collect(Collectors.toList());
-        return buildResponse(true, "Categories fetched successfully", contactList, HttpStatus.OK);
+
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("count", categoryList.size());
+        responseData.put("categories", categoryList);
+
+        return buildResponse(true, "Categories fetched successfully", responseData, HttpStatus.OK);
     }
 
     @PutMapping("/update/{id}")
     @CacheEvict(value = {"categories", "allCategories"}, allEntries = true)
     @Async
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> updateCategory(
-            @PathVariable Integer id, @Valid @RequestBody Category request) {
+            @PathVariable Long id, @Valid @RequestBody Category request) {
         if (categoryRepository.findById(id).isEmpty()) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, "Category not found", null, HttpStatus.NOT_FOUND));
         }
 
         Category category = CommonUtility.buildCategoryFromRequest(request, id);
+
+        Category savedCategory = categoryRepository.save(category);
 
         categoryRepository.save(category);
         Map<String, String> data = Map.of("categoryId", String.valueOf(request.getCategoryId()), "status", "updated");
@@ -106,7 +123,7 @@ public class CategoryResource {
     @DeleteMapping("/delete/{id}")
     @CacheEvict(value = {"categories", "allCategories"}, allEntries = true)
     @Async
-    public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> deleteCategoryById(@PathVariable Integer id) {
+    public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> deleteCategoryById(@PathVariable Long id) {
         if (categoryRepository.findById(id).isEmpty()) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, "Category not found", null, HttpStatus.NOT_FOUND));

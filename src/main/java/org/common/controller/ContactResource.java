@@ -57,7 +57,9 @@ public class ContactResource {
 
         UserState userState = CommonUtility.buildContactFromRequest(request);
 
-        // Save the contact and get the saved entity with the generated ID
+        // Set generated long ID
+        userState.setId(CommonUtility.generateUniqueContactId());
+
         UserState savedContact = contactRepository.save(userState);
 
         Map<String, String> data = Map.of(
@@ -71,7 +73,7 @@ public class ContactResource {
 
     // Get Contact by ID
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Map<String, String>>> getContactById(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> getContactById(@PathVariable Long id) {
         Optional<UserState> contact = contactRepository.findById(id);
         return contact.map(c -> buildResponse(true, APIMessages.CONTACT_FETCHED, CommonUtility.contactToMap(c), HttpStatus.OK))
                 .orElseGet(() -> buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
@@ -79,8 +81,9 @@ public class ContactResource {
 
     // Get All Contacts
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getAllContacts() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllContacts() {
         List<UserState> contacts = (List<UserState>) contactRepository.findAll();
+
         if (contacts.isEmpty()) {
             return buildResponse(false, "No contacts found", null, HttpStatus.NOT_FOUND);
         }
@@ -88,7 +91,13 @@ public class ContactResource {
         List<Map<String, String>> contactList = contacts.stream()
                 .map(CommonUtility::contactToMap)
                 .collect(Collectors.toList());
-        return buildResponse(true, "Contacts fetched successfully", contactList, HttpStatus.OK);
+
+        // Create response data map with both count and list
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("count", contactList.size());
+        responseData.put("contacts", contactList);
+
+        return buildResponse(true, "Contacts fetched successfully", responseData, HttpStatus.OK);
     }
 
     // Search Contacts by firstName, lastName, emailAddress
@@ -115,7 +124,7 @@ public class ContactResource {
 
     @PutMapping("/update/{id}")
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> updateContact(
-            @PathVariable Integer id, @Valid @RequestBody UserState request) {
+            @PathVariable Long id, @Valid @RequestBody UserState request) {
 
         if (contactRepository.findById(id).isEmpty()) {
             return CompletableFuture.completedFuture(
@@ -146,7 +155,7 @@ public class ContactResource {
 
     // Delete Contact
     @DeleteMapping("/delete/{id}")
-    public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> deleteContactById(@PathVariable Integer id) {
+    public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> deleteContactById(@PathVariable Long id) {
         if (contactRepository.findById(id).isEmpty()) {
             return CompletableFuture.completedFuture(
                     buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
@@ -165,9 +174,8 @@ public class ContactResource {
     }
 
     // List contact based on category
-
     @GetMapping("/category/{id}")
-    public ResponseEntity<ApiResponse<List<Map<String, String>>>> getAllContactsByCategory(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllContactsByCategory(@PathVariable Long id) {
         String categoryId = String.valueOf(id);
 
         List<Map<String, String>> filteredContacts = ((List<UserState>) contactRepository.findAll()).stream()
@@ -182,7 +190,12 @@ public class ContactResource {
             return buildResponse(false, "No contacts found in this category", null, HttpStatus.NOT_FOUND);
         }
 
-        return buildResponse(true, "Contacts fetched successfully", filteredContacts, HttpStatus.OK);
+        // Wrap count and data together
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("count", filteredContacts.size());
+        responseData.put("contacts", filteredContacts);
+
+        return buildResponse(true, "Contacts fetched successfully", responseData, HttpStatus.OK);
     }
 
     @GetMapping("/favourite")

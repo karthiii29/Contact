@@ -2,12 +2,13 @@ package org.common.util;
 
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.apache.catalina.User;
 import org.common.service.Category;
 import org.common.service.UserState;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
 
 public class CommonUtility {
     public static Response returnResponse(String responseJSON, boolean responseStatus) {
@@ -69,7 +70,7 @@ public class CommonUtility {
         }
 
         // Always include favorite (boolean has default value: false if not set)
-        data.put("favorite", String.valueOf(contact.isFavorites()));
+        data.put("favorites", String.valueOf(contact.isFavorites()));
 
         // Only include categories if not null or empty
         if (contact.getCategories() != null && !contact.getCategories().isEmpty()) {
@@ -99,9 +100,9 @@ public class CommonUtility {
         return contact;
     }
 
-    public static UserState buildContactFromRequest(UserState request, Integer id) {
+    public static UserState buildContactFromRequest(UserState request, Long id) {
         UserState contact = new UserState();
-        contact.setId(Math.toIntExact(id));
+        contact.setId(id);
         contact.setFirstName(request.getFirstName());
         contact.setMiddleName(request.getMiddleName());
         contact.setLastName(request.getLastName());
@@ -118,11 +119,18 @@ public class CommonUtility {
         return category;
     }
 
-    public static Category buildCategoryFromRequest(Category request, Integer id) {
+    public static Category buildCategoryFromRequest(Category request, Long id) {
         Category category = new Category();
         category.setCategoryId(id);
         category.setCategoryName(request.getCategoryName());
         return category;
+    }
+
+    public static Long generateUniqueContactId() {
+        long epoch = 1609459200000L; // Jan 1, 2021
+        long timestamp = System.currentTimeMillis();
+        long randomPart = new Random().nextInt(4096); // 12-bit random sequence
+        return ((timestamp - epoch) << 12) | randomPart;
     }
 
 }

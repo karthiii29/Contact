@@ -1,16 +1,19 @@
 package org.common.service;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 @Entity
 @Table(name = "contacts")
 public class UserState {
 
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "id")
+    private Long id;
 
     private String firstName;
     private String middleName;
@@ -26,11 +29,11 @@ public class UserState {
 
     private ArrayList<String> categories;
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
