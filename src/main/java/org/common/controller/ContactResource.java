@@ -107,15 +107,13 @@ public class ContactResource {
             @RequestParam(required = false) String lastName,
             @RequestParam(required = false) String emailAddress) {
         List<UserState> contacts = contactRepository.searchByFields(
-                firstName != null && !firstName.isBlank() ? firstName.trim() : null,
-                lastName != null && !lastName.isBlank() ? lastName.trim() : null,
-                emailAddress != null && !emailAddress.isBlank() ? emailAddress.trim() : null
+                (firstName == null || firstName.isBlank()) ? null : firstName.trim(),
+                (lastName == null || lastName.isBlank()) ? null : lastName.trim(),
+                (emailAddress == null || emailAddress.isBlank()) ? null : emailAddress.trim()
         );
-
         if (contacts.isEmpty()) {
-            return buildResponse(false, "No matching contacts found", null, HttpStatus.NOT_FOUND);
+            return buildResponse(false, "No matching contacts found", Collections.emptyList(), HttpStatus.NOT_FOUND);
         }
-
         List<Map<String, String>> result = contacts.stream()
                 .map(CommonUtility::contactToMap)
                 .collect(Collectors.toList());
@@ -125,32 +123,22 @@ public class ContactResource {
     @PutMapping("/update/{id}")
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> updateContact(
             @PathVariable Long id, @Valid @RequestBody UserState request) {
-
-        if (contactRepository.findById(id).isEmpty()) {
-            return CompletableFuture.completedFuture(
-                    buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND));
-        }
-
-        String validationError = CommonUtility.validateContactInfo(
-                request.getFirstName(), request.getEmailAddress(), request.getMobileNumber());
-
-        if (validationError != null) {
-            return CompletableFuture.completedFuture(
-                    buildResponse(false, validationError, null, HttpStatus.BAD_REQUEST));
-        }
-
-        UserState userState = CommonUtility.buildContactFromRequest(request, id);
-
-        // Save updated contact and get the persisted entity
-        UserState updatedContact = contactRepository.save(userState);
-
-        Map<String, String> data = Map.of(
-                "contactId", String.valueOf(updatedContact.getId()),
-                "status", "updated"
-        );
-
-        return CompletableFuture.completedFuture(
-                buildResponse(true, APIMessages.UPDATE_SUCCESS, data, HttpStatus.OK));
+        return (CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>>) contactRepository.findById(id)
+                .map(existing -> {
+                    String validationError = CommonUtility.validateContactInfo(
+                            request.getFirstName(), request.getEmailAddress(), request.getMobileNumber());
+                    if (validationError != null) {
+                        return CompletableFuture.completedFuture(
+                                buildResponse(false, validationError, null, HttpStatus.BAD_REQUEST));
+                    }
+                    UserState updatedContact = CommonUtility.buildContactFromRequest(request, id);
+                    contactRepository.save(updatedContact);
+                    Map<String, String> data = Map.of("contactId", String.valueOf(id), "status", "updated");
+                    return CompletableFuture.completedFuture(
+                            buildResponse(true, "Contact updated successfully", data, HttpStatus.OK));
+                })
+                .orElseGet(() -> CompletableFuture.completedFuture(
+                        buildResponse(false, APIMessages.CONTACT_NOT_FOUND_ERROR, null, HttpStatus.NOT_FOUND)));
     }
 
     // Delete Contact

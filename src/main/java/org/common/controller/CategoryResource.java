@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,24 +48,18 @@ public class CategoryResource {
         return new ResponseEntity<>(new ApiResponse<>(success, message, data), status);
     }
 
-    // Create Contact
+    // Create Category
     @PostMapping("/create")
     @Async
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> createCategory(
             @Valid @RequestBody Category request) {
-
         Category category = CommonUtility.buildCategoryFromRequest(request);
-
-        // Set generated long ID
         category.setCategoryId(CommonUtility.generateUniqueContactId());
-
         Category savedCategory = categoryRepository.save(category);
-
         Map<String, String> data = Map.of(
-                "contactId", String.valueOf(savedCategory.getCategoryId()),
+                "categoryId", String.valueOf(savedCategory.getCategoryId()),
                 "status", "success"
         );
-
         return CompletableFuture.completedFuture(
                 buildResponse(true, APIMessages.SUCCESS_MESSAGE, data, HttpStatus.OK));
     }
@@ -72,9 +67,9 @@ public class CategoryResource {
     // Get Category by ID
     @GetMapping("/{id}")
     @Cacheable(value = "category", key = "#id")
-    public ResponseEntity<ApiResponse<Optional<Category>>> getCategoryById(@PathVariable Long id) {
-        Optional<Category> category = categoryRepository.findById(id);
-        return category.map(c -> buildResponse(true, APIMessages.CONTACT_FETCHED, category, HttpStatus.OK))
+    public ResponseEntity<ApiResponse<Map<String, String>>> getCategoryById(@PathVariable Long id) {
+        return categoryRepository.findById(id)
+                .map(category -> buildResponse(true, APIMessages.CONTACT_FETCHED, CommonUtility.categoryToMap(category), HttpStatus.OK))
                 .orElseGet(() -> buildResponse(false, "Category not found", null, HttpStatus.NOT_FOUND));
     }
 
@@ -82,57 +77,51 @@ public class CategoryResource {
     @GetMapping("/all")
     @Cacheable(value = "allCategories")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllCategories() {
-        List<Category> categories = (List<Category>) categoryRepository.findAll();
-
+        List<Category> categories = categoryRepository.findAll();
         if (categories.isEmpty()) {
-            return buildResponse(false, "No Categories found", null, HttpStatus.NOT_FOUND);
+            return buildResponse(false, "No Categories found", Collections.emptyMap(), HttpStatus.NOT_FOUND);
         }
-
         List<Map<String, String>> categoryList = categories.stream()
                 .map(CommonUtility::categoryToMap)
                 .collect(Collectors.toList());
-
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("count", categoryList.size());
         responseData.put("categories", categoryList);
-
         return buildResponse(true, "Categories fetched successfully", responseData, HttpStatus.OK);
     }
 
     @PutMapping("/update/{id}")
-    @CacheEvict(value = {"categories", "allCategories"}, allEntries = true)
+    @CacheEvict(value = {"category", "allCategories"}, allEntries = true)
     @Async
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> updateCategory(
             @PathVariable Long id, @Valid @RequestBody Category request) {
-        if (categoryRepository.findById(id).isEmpty()) {
-            return CompletableFuture.completedFuture(
-                    buildResponse(false, "Category not found", null, HttpStatus.NOT_FOUND));
-        }
-
-        Category category = CommonUtility.buildCategoryFromRequest(request, id);
-
-        Category savedCategory = categoryRepository.save(category);
-
-        categoryRepository.save(category);
-        Map<String, String> data = Map.of("categoryId", String.valueOf(request.getCategoryId()), "status", "updated");
-        return CompletableFuture.completedFuture(
-                buildResponse(true, "Category added successfully", data, HttpStatus.OK));
+        return categoryRepository.findById(id)
+                .map(existing -> {
+                    Category category = CommonUtility.buildCategoryFromRequest(request, id);
+                    Category savedCategory = categoryRepository.save(category);
+                    Map<String, String> data = Map.of("categoryId", String.valueOf(savedCategory.getCategoryId()), "status", "updated");
+                    return CompletableFuture.completedFuture(
+                            buildResponse(true, "Category updated successfully", data, HttpStatus.OK));
+                })
+                .orElseGet(() -> CompletableFuture.completedFuture(
+                        buildResponse(false, "Category not found", null, HttpStatus.NOT_FOUND)));
     }
 
-    // Delete Contact
+    // Delete Category
     @DeleteMapping("/delete/{id}")
-    @CacheEvict(value = {"categories", "allCategories"}, allEntries = true)
+    @CacheEvict(value = {"category", "allCategories"}, allEntries = true)
     @Async
     public CompletableFuture<ResponseEntity<ApiResponse<Map<String, String>>>> deleteCategoryById(@PathVariable Long id) {
-        if (categoryRepository.findById(id).isEmpty()) {
-            return CompletableFuture.completedFuture(
-                    buildResponse(false, "Category not found", null, HttpStatus.NOT_FOUND));
-        }
-
-        categoryRepository.deleteById(id);
-        Map<String, String> data = Map.of("categoryId", String.valueOf(id), "status", "deleted");
-        return CompletableFuture.completedFuture(
-                buildResponse(true, "Category deleted successfully", data, HttpStatus.OK));
+        return categoryRepository.findById(id)
+                .map(existing -> {
+                    categoryRepository.deleteById(id);
+                    Map<String, String> data = Map.of("categoryId", String.valueOf(id), "status", "deleted");
+                    return CompletableFuture.completedFuture(
+                            buildResponse(true, "Category deleted successfully", data, HttpStatus.OK));
+                })
+                .orElseGet(() -> CompletableFuture.completedFuture(
+                        buildResponse(false, "Category not found", null, HttpStatus.NOT_FOUND)));
     }
+
 
 }
