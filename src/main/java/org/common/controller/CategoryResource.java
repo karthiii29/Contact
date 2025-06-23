@@ -123,5 +123,23 @@ public class CategoryResource {
                         buildResponse(false, "Category not found", null, HttpStatus.NOT_FOUND)));
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<Map<String, String>>>> searchCategoriesByName(
+            @RequestParam(required = false) String categoryName) {
+        List<Category> categories = categoryRepository.findAll();
+        if (categoryName != null && !categoryName.isBlank()) {
+            categories = categories.stream()
+                    .filter(cat -> cat.getCategoryName().toLowerCase().contains(categoryName.toLowerCase()))
+                    .toList();
+        }
+        if (categories.isEmpty()) {
+            return buildResponse(false, "No matching categories found", Collections.emptyList(), HttpStatus.NOT_FOUND);
+        }
+        List<Map<String, String>> result = categories.stream()
+                .map(CommonUtility::categoryToMap)
+                .collect(Collectors.toList());
+        return buildResponse(true, "Categories matched successfully", result, HttpStatus.OK);
+    }
+
 
 }
