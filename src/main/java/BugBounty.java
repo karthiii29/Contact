@@ -21,14 +21,14 @@ import java.util.stream.Collectors;
 public class BugBounty {
     private static final String BUG_SEARCH_URL = "https://bugs.zohosecurity.com/api/v1/searchbug";
     private static final String BUG_DETAILS_URL = "https://bugs.zohosecurity.com//api/v1/bug?bug_id=";
-    private static final String AUTH_TOKEN = "Zoho-oauthtoken 1000.0ec960b36b7d62620454efb714934522.a1fa26df9e180d6a0f1ca01aa7049165"; // Replace with actual token
+    private static final String AUTH_TOKEN = "Zoho-oauthtoken 1000.b94db5058a45e58e32e88c6a4edb41ea.44b0931ddac76b6cdcff71783dc008df"; // Replace with actual token
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static List<String> getBugIds() throws IOException {
         // Build query parameters
         Map<String, String> params = new LinkedHashMap<>();
-        params.put("offset", "1");
-        params.put("limit", "70");
+        params.put("offset", "0");
+        params.put("limit", "4");
         params.put("department_type", "Zoho");
         params.put("service_id", "[101000000005071]");
         params.put("status_id", "[101000000004039]");
@@ -168,10 +168,150 @@ public class BugBounty {
         return bugDetails;
     }
 
+    private static void getBugIdsWithLimit(int maxTotal) {
+        int offset = 0;
+        int limit = 70; // Zoho API's page size
+        int totalFetched = 0;
+
+        List<String> bugIds = new ArrayList<>();
+        OkHttpClient client = new OkHttpClient();
+        ObjectMapper mapper = new ObjectMapper();
+
+        while (true) {
+            try {
+                // Prepare query params
+                Map<String, String> params = new LinkedHashMap<>();
+                params.put("offset", String.valueOf(offset));
+                params.put("limit", String.valueOf(limit));
+                params.put("department_type", "Zoho");
+                params.put("service_id", "[101000000005071]");
+                params.put("status_id", "[101000000004039]");
+
+                // Build query string
+                StringBuilder query = new StringBuilder("?");
+                for (Map.Entry<String, String> entry : params.entrySet()) {
+                    if (query.length() > 1) query.append("&");
+                    query.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
+                    query.append("=");
+                    query.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+                }
+
+                String fullUrl = "https://bugs.zohosecurity.com/api/v1/searchbug" + query;
+
+                Request request = new Request.Builder()
+                        .url(fullUrl)
+                        .get()
+                        .addHeader("Authorization", AUTH_TOKEN) // Replace with real token
+                        .addHeader("Cookie", "JSESSIONID=FD25733D1C15A87AF70B23DC028B6F90; _zcsr_tmp=e8b5ed31-4731-425d-8853-32e8a2fe9c4d; cbountycsr=e8b5ed31-4731-425d-8853-32e8a2fe9c4d; zalb_34b826b3bd=4e70fa5cf2d9002758e78478d91f84a8") // Replace with real cookies
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (response.code() == 200 && response.body() != null) {
+                        String json = response.body().string();
+                        JsonNode root = mapper.readTree(json);
+                        JsonNode bugs = root.path("value");
+
+                        if (!bugs.isArray() || bugs.isEmpty()) break;
+
+                        for (JsonNode bug : bugs) {
+                            bugIds.add(bug.path("bug_id").asText());
+                            totalFetched++;
+                            if (totalFetched >= maxTotal) break;
+                        }
+
+                        if (totalFetched == maxTotal) break;
+
+                        offset += limit;
+                    } else {
+                        System.err.println("Failed at offset " + offset + " → " + response.code());
+                        break;
+                    }
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                break;
+            }
+        }
+
+// ✅ Final Result
+        System.out.println("Total Bugs Collected: " + bugIds.size());
+        bugIds.forEach(System.out::println);
+    }
+
+    public static List<String> getAllBugIds() {
+        List<String> bugIds = new ArrayList<>();
+        int offset = 0;
+        int limit = 70; // You can adjust the batch size
+
+        OkHttpClient client = new OkHttpClient();
+        ObjectMapper mapper = new ObjectMapper();
+
+        while (true) {
+            try {
+                // Prepare query params
+                Map<String, String> params = new LinkedHashMap<>();
+                params.put("offset", String.valueOf(offset));
+                params.put("limit", String.valueOf(limit));
+                params.put("department_type", "Zoho");
+                params.put("service_id", "[101000000005161]");  // 101000002102021,101000000005161
+                params.put("status_id", "[101000000004039]");
+                params.put("owasp_id", "[101000001064047,101000001064033,101000001101417,101000001064029,101000000005007,101000000005053]");
+
+                // Build query string
+                String query = params.entrySet().stream()
+                        .map(e -> URLEncoder.encode(e.getKey(), StandardCharsets.UTF_8) + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
+                        .collect(Collectors.joining("&", "?", ""));
+
+                String fullUrl = "https://bugs.zohosecurity.com/api/v1/searchbug" + query;
+
+                Request request = new Request.Builder()
+                        .url(fullUrl)
+                        .get()
+                        .addHeader("Authorization", AUTH_TOKEN)
+                        .addHeader("Cookie", "JSESSIONID=FD25733D1C15A87AF70B23DC028B6F90; _zcsr_tmp=e8b5ed31-4731-425d-8853-32e8a2fe9c4d; cbountycsr=e8b5ed31-4731-425d-8853-32e8a2fe9c4d; zalb_34b826b3bd=4e70fa5cf2d9002758e78478d91f84a8") // Optional: if required
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (!response.isSuccessful() || response.body() == null) {
+                        System.err.println("Failed to fetch data: HTTP " + response.code());
+                        break;
+                    }
+
+                    String json = response.body().string();
+                    JsonNode root = mapper.readTree(json);
+                    JsonNode bugArray = root.path("value");
+
+                    if (!bugArray.isArray() || bugArray.isEmpty()) {
+                        break; // No more bugs
+                    }
+
+                    for (JsonNode bug : bugArray) {
+                        String bugId = bug.path("bug_id").asText();
+                        if (!bugId.isEmpty()) {
+                            bugIds.add(bugId);
+                        }
+                    }
+
+                    offset += limit;
+
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                break;
+            }
+        }
+
+        return bugIds;
+    }
+
     public static void main(String[] args) throws IOException {
-        List<String> bugIds = getBugIds();
+//        getBugIdsWithLimit(100);
+        List<String> bugIds = getAllBugIds();
         List<Map<String, String>> bugList = getBugDetails(bugIds);
-        exportToExcel(bugList, "/Users/karthik-19462/Documents/Common/Bug_Report.xlsx");
-        System.out.println(getBugIds());
+        exportToExcel(bugList, "/Users/karthik-19462/Documents/Common/Bug_Report_1.xlsx");
+        System.out.println(bugIds.size());
+
     }
 }
